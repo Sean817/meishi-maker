@@ -17,7 +17,7 @@
         {% if user.about_me %}<p style="font-size:20px">个人介绍:{{ user.about_me }}</p>{% endif %}
         <p>注册时间{{ moment(user.member_since).format('L') }}. </p>
         <p>上一次登录 {{ moment(user.last_since).fromNow() }}.</p>
-        <p>{{ posts.__len__() }} 篇文章.</p>
+        <p>{{ posts.__len__() }} 条动态.</p>
         <p>
             {% if current_user.can(Permission.FOLLOW) and user != current_user %}
                 {% if not current_user.is_following(user) %}
@@ -29,7 +29,7 @@
             {% endif %}
             <a href="{{ url_for('.followers', username=user.username) }}">粉丝: <span
                     class="badge">{{ ++followers.__len__() }}</span></a>
-            <a href="{{ url_for('.following', username=user.username) }}">{{ user.username }}关注的人: <span
+            <a href="{{ url_for('.following', username=user.username) }}">关注: <span
                     class="badge">{{ ++following.__len__() }}</span></a>
             {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
                 | <span class="label label-default">他关注了你</span>

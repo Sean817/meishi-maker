@@ -30,7 +30,7 @@ def index():
             form.validate_on_submit():
         Post(body=form.body.data).new_article()
         return redirect(url_for('.index'))
-    page = request.args.get('page', 1, type=int)
+    # page = request.args.get('page', 1, type=int)
     show_followed = True
     if current_user.is_authenticated:
         show_followed = bool(request.cookies.get('show_followed', ''))
@@ -39,7 +39,8 @@ def index():
     # else:
     #     pagination = Paginate(page, 0)
     posts = []
-    return render_template('index.html', form=form, posts=posts,  show_followed=show_followed)
+    return render_template('index.html', form=form, posts=posts, show_followed=show_followed)
+
 
 # @main.route('/post/<id>', methods=['GET', 'POST'])
 # def post(id):

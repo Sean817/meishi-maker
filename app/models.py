@@ -48,14 +48,12 @@ class Role(db.Document):
 
 
 class User(UserMixin, db.Document):
-    # id = db.IntField()
     email = db.EmailField(max_length=64)
     username = db.StringField(max_length=64, required=True)
-    # role = db.StringField(max_length=32, default='reader', choices=ROLES)
     role = db.StringField(max_length=32, default='User')
     password_hash = db.StringField(max_length=128, required=True)
     # confirmed = db.BooleanField(default=False)
-    activate = db.BooleanField(default=False)
+    activate = db.BooleanField(default=True)
     followers = db.ListField()
     following = db.ListField()
     member_since = db.DateTimeField(default=datetime.utcnow())
