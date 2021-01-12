@@ -55,7 +55,7 @@ class EditPostForm(FlaskForm):
 
 
 class CommentForm(FlaskForm):
-    body = StringField('', validators=[DataRequired()])
+    comment = StringField('', validators=[DataRequired()])
     submit = SubmitField('发布')
 
 

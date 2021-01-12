@@ -8,6 +8,7 @@ from flask_uploads import UploadSet, IMAGES
 from ..create_path import create_path
 from werkzeug.utils import secure_filename
 # from ..decorators import admin_required, permission_required
+from bson import ObjectId
 from datetime import datetime
 from config import basedir
 import time
@@ -65,6 +66,52 @@ class Paginate:
                 yield num
                 last = num
 
+
+class PaginateComments:
+    def __init__(self, page, id):
+        posts = Moment.objects(id=ObjectId(id)).first().comments
+        self.total = posts.__len__()
+        self.pages = int(self.total / 20)
+        if self.total % 20 != 0:
+            self.pages += 1
+        if page == -1:
+            self.page = self.pages
+        else:
+            self.page = page
+        if self.page == 1:
+            self.has_prev = False
+        else:
+            self.has_prev = True
+        if self.page == self.pages:
+            self.has_next = False
+        else:
+            self.has_next = True
+        self.next_num = self.page + 1
+        self.per_page = 20
+        self.prev_num = self.page - 1
+        self.current_num = self.total - (20 * (self.page - 1))
+        if self.current_num > 20:
+            self.current_num = 20
+        self.items = []
+        for i in range(self.current_num):
+            self.items.append(
+                {'body': posts[self.prev_num * 20 + i][0], 'username': posts[self.prev_num * 20 + i][1],
+                 'timestamp': posts[self.prev_num * 20 + i][2]})
+            self.items.reverse()
+
+    def iter_pages(self, left_edge=2, left_current=2,
+                   right_current=5, right_edge=2):
+        last = 0
+        for num in range(1, self.pages + 1):
+            if num <= left_edge or \
+                    (self.page - left_current - 1 < num < self.page + right_current) \
+                    or num > self.pages - right_edge:
+                if last + 1 != num:
+                    yield None
+                yield num
+                last = num
+
+
 @main.route('/', methods=['GET', 'POST'])
 def index():
     page = request.args.get('page', 1, type=int)
@@ -112,23 +159,24 @@ def show_all():
     return resp
 
 
-# @main.route('/post/<id>', methods=['GET', 'POST'])
-# def post(id):
-#     post = MongoClient().blog.Aritical.find({'_id': ObjectId(id)})
-#     form = CommentForm()
-#     if form.validate_on_submit():
-#         comments = post[0].get('comments')
-#         body = form.body.data
-#         comments.append([body, current_user.username, datetime.utcnow()])
-#         MongoClient().blog.Aritical.update({'_id': ObjectId(id)}, {'$set': {'comments': comments}})
-#         flash('评论发布成功.')
-#         return redirect(url_for('.post', id=id, page=-1))
-#     page = request.args.get('page', 1, type=int)
-#     pagination = PaginateComments(page, id)
-#     comments = pagination.items
-#     comment = (post[0].get('username') != current_user.username)
-#     return render_template('post.html', posts=post, form=form, i=0,
-#                            comments=comments, pagination=pagination, author=comment, id=id)
+@main.route('/post/<id>', methods=['GET', 'POST'])
+@login_required
+def post(id):
+    post = Moment.objects(id=ObjectId(id)).first()
+    # print(post.username)
+    form = CommentForm()
+    if form.validate_on_submit():
+        comments = post.comments
+        comments.append([form.comment.data, current_user.username, datetime.utcnow()])
+        Moment.objects(id=ObjectId(id)).update(comments=comments)
+        flash('评论发布成功.')
+        return redirect(url_for('.post', id=id, page=-1))
+    page = request.args.get('page', 1, type=int)
+    pagination = PaginateComments(page, id)
+    comments = pagination.items
+    comment = (post.username != current_user.username)
+    return render_template('post.html', posts=[post], form=form, i=0,comments=comments,
+                           pagination=pagination, author=comment, id=id)
 
 
 @main.route('/followed')
