@@ -60,6 +60,20 @@ class User(UserMixin, db.Document):
     last_since = db.DateTimeField(default=datetime.utcnow())
 
 
+class Moment(db.Document):
+    username = db.StringField(max_length=64, required=True)
+    user_id = db.StringField()
+    content = db.StringField(max_length=1024)
+    picture = db.ListField()
+    issuing_time = db.DateTimeField(default=datetime.utcnow())
+    comments = db.ListField()
+
+
+class Food(UserMixin, db.Document):
+    describe = db.StringField(max_length=512)
+    picture = db.FileField()
+
+
 @login_manager.user_loader
 def load_user(user_id):
     user = User.objects(id=ObjectId(user_id)).first()
@@ -134,19 +148,3 @@ def body_html(body):
 login_manager.anonymous_user = AnonymousUser
 
 
-class Post:
-    def __init__(self, body):
-        self.body = body
-        self.body_html = ''
-
-    def new_article(self):
-        self.body_html = body_html(self.body)
-        collection = {
-            'username': current_user.username,
-            'user_id': current_user.id,
-            'body': self.body,
-            'issuing_time': datetime.utcnow(),
-            'body_html': self.body_html,
-            'comments': []
-        }
-        # MongoClient().blog.Aritical.insert(collection)

@@ -138,3 +138,11 @@ div.flask-pagedown-preview h3 {
 .table.followers tr {
     border-bottom: 1px solid #e0e0e0;
 }
+
+.post-list {
+    flex-direction: row-reverse;
+}
+
+.post-moment{
+    width: 100%;
+}

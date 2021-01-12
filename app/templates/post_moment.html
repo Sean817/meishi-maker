@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
+{% block title %}美食Maker-主页{% endblock %}
+{{ pagedown.include_pagedown() }}
+{% block page_content %}
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        {{ form.content }}
+        {{ form.photo(multiple="multiple") }}
+        {% for error in form.photo.errors %}
+            <span style="color: red;">{{ error }}</span>
+        {% endfor %}
+        {{ form.submit }}
+    </form>
+
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {#    {{ pagedown.include_pagedown() }}#}
+{% endblock %}

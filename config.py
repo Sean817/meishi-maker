@@ -22,7 +22,8 @@ class Config:
     FLASKY_MAIL_SUBJECT_PREFIX = 'haha'
     FLASKY_MAIL_SENDER = '美食Maker <pysean@sina.com>'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
-
+    UPLOADED_PHOTOS_DEST = 'app/static/moment_pic'
+    UPLOADED_PHOTOS_URL = './static/moment_pic/'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MONGODB_SETTINGS = {
         'db': 'foods',

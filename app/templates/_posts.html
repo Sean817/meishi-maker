@@ -7,32 +7,35 @@
             {#                </a>#}
             {#            </div>#}
             <div class="post-content">
-                <div class="post-date">{{ moment(post.get('issuing_time')).fromNow() }}</div>
+                <div class="post-date">{{ moment(post.issuing_time).fromNow() }}</div>
                 <div class="post-author"><a
-                        href="{{ url_for('.user', username=post.get('username')) }}">{{ post.get('username') }}</a>
+                        href="{{ url_for('.user', username=post.username) }}">{{ post.username }}</a>
                 </div>
                 <div class="post-body">
-                    {% if post.body_html %}
-                        {{ post.body_html | safe }}
-                    {% else %}
-                        {{ post.body }}
+                    {% if post.content %}
+                        {{ post.content | safe }}
+                    {% endif %}
+                    {% if post.picture !=[] %}
+                        {% for file_url in post.picture %}
+                            <br><img src="{{ file_url }}" height="200" width="200">
+                        {% endfor %}
                     {% endif %}
                 </div>
                 <div class="post-footer">
-                    {% if current_user.is_administrator() %}
-                        <a href="{{ url_for('.edit', id=post.get('_id')) }}">
-                            <span class="label label-danger">编辑[管理员]</span>
-                        </a>
-                    {% elif current_user.id == post.get('user_id') %}
-                        <a href="{{ url_for('.edit', id=post.get('_id')) }}">
-                            <span class="label label-primary">编辑</span>
-                        </a>
-                    {% endif %}
-                    <a href="{{ url_for('.post', id=post.get('_id')) }}">
-                        <span class="label label-default">链接</span>
-                    </a>
-                    <a href="{{ url_for('.post', id=post.get('_id')) }}">
-                        <span class="label label-primary">{{ post.get('comments').__len__() }} 评论</span>
+{#                    {% if current_user.is_administrator() %}#}
+{#                        <a href="{{ url_for('.edit', id=post.id) }}">#}
+{#                            <span class="label label-danger">编辑[管理员]</span>#}
+{#                        </a>#}
+{#                    {% elif current_user.id == post.user_id %}#}
+{#                        <a href="{{ url_for('.edit', id=post._id) }}">#}
+{#                            <span class="label label-primary">编辑</span>#}
+{#                        </a>#}
+{#                    {% endif %}#}
+{#                    <a href="{{ url_for('.moment', id=post._id) }}">#}
+{#                        <span class="label label-default">链接</span>#}
+{#                    </a>#}
+                    <a href="{{ url_for('.moment', id=post._id) }}">
+                        <span class="label label-primary">{{ post.comments.__len__() }} 评论</span>
                     </a>
                 </div>
             </div>
