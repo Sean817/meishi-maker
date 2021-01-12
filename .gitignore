@@ -45,3 +45,6 @@ Temporary Items
 
 # env
 *.sh
+
+# picture
+moment_pic/
