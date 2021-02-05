@@ -5,14 +5,17 @@ from flask_login import login_required, current_user
 from .forms import EditProfileForm, EditProfileAdminForm, EditPostForm, CommentForm, MomentForm
 from ..decorators import admin_required, permission_required
 from flask_uploads import UploadSet, IMAGES
-from ..create_path import create_path
+from ..img_handle import create_path
 from werkzeug.utils import secure_filename
 # from ..decorators import admin_required, permission_required
 from bson import ObjectId
 from datetime import datetime
 from config import basedir
 import time
+import os
 import hashlib
+import PIL
+from PIL import Image
 
 
 class Paginate:
@@ -28,9 +31,9 @@ class Paginate:
             # following.append([current_user.username, 'date'])
             for i in range(following.__len__()):
                 for x in range(moment.count()):
-                    if following[i][0] == moment[x].get('username'):
+                    if following[i]['username'] == moment[x].username:
                         self.posts.append(moment[x])
-                        self.posts.sort(key=lambda x: x.get('issuing_time'), reverse=True)
+                        self.posts.sort(key=lambda x: x.issuing_time, reverse=True)
             self.total = self.posts.__len__()
         self.pages = int(self.total / 20)
         if self.total % 20 != 0:
@@ -135,15 +138,28 @@ def moment():
         dir_path = basedir + '/app/static/moment_pic/'
         upload_path = create_path(dir_path)
         photos = UploadSet('photos', IMAGES)
-        for filename in request.files.getlist('photo'):
+        for img in request.files.getlist('photo'):
             name = hashlib.md5((current_user.username + str(time.time())).encode('utf8')).hexdigest()[:15]
-            filename = photos.save(filename, folder=upload_path, name=name + '.')
-            # print(filename)
-            file_url = photos.url(filename)
-            file_url_list.append(file_url)
-            # print(file_url)
+            img_name = photos.save(img, folder=upload_path, name=name + '.')
+            # print(upload_path,img_name)
+            base_width = 300
+            img = Image.open(photos.path(img_name))
+            w_percent = (base_width / float(img.size[0]))
+            h_size = int((float(img.size[1]) * float(w_percent)))
+            img_s = img.resize((base_width, h_size), PIL.Image.ANTIALIAS)
+            fn,ext = img_name.split('.')
+            # fn,ext = os.path.splitext(img_name)
+            img_s_name = name+'_s.'+ext
+            # print('./app/static/moment_pic/' + upload_path+img_s_name)
+            img_s.save('app/static/moment_pic/' + upload_path+img_s_name,ext)
+            # './app/static/moment_pic/' + str(upload_path)
+            # img_s = photos.save(img_s, folder=upload_path, name=name + '_s' + '.')
+            # img_s_url = photos.url(img_name)
+            img_s_url = photos.url(upload_path+img_s_name)
+            file_url_list.append(img_s_url)
+        # print(file_url)
         Moment(username=current_user.username, picture=file_url_list,
-               content=form.content.data, user_id=current_user.id).save()
+           content=form.content.data, user_id=current_user.id).save()
         flash('发布成功！', 'success')
         return redirect(url_for('.index'))
     else:
@@ -175,8 +191,25 @@ def post(id):
     pagination = PaginateComments(page, id)
     comments = pagination.items
     comment = (post.username != current_user.username)
-    return render_template('post.html', posts=[post], form=form, i=0,comments=comments,
+    return render_template('post.html', posts=[post], form=form, i=0, comments=comments,
                            pagination=pagination, author=comment, id=id)
+
+
+@main.route('/delete/<id>')
+@login_required
+def delete(id):
+    user = Moment.objects(id=ObjectId(id)).first()
+    if not current_user.username == user.username and not current_user.is_administrator():
+        abort(304)
+    timedata = request.args.get('data')
+    comments = user.comments
+    for i in range(comments.__len__()):
+        time = str(comments[i][2])
+        if time == timedata:
+            del comments[i]
+            break
+    Moment.objects(id=ObjectId(id)).update(comments=comments)
+    return redirect(url_for('.post', id=id))
 
 
 @main.route('/followed')
@@ -226,8 +259,10 @@ def follow(username):
         return redirect(url_for('.index'))
     very = False
     temp = User.objects(username=current_user.username).first().following
+    print(temp)
+    # if username in temp:
     for i in range(temp.__len__()):
-        if temp[i][0] == username:
+        if temp[i]['username'] == username:
             very = True
             break
     if very:
@@ -235,7 +270,7 @@ def follow(username):
         return redirect(url_for('.user', username=username))
     followers = user.followers
     time = datetime.utcnow()
-    follow = [current_user.username, time]
+    follow = {'username': current_user.username, 'timestamp': time}
     followers.append(follow)
     User.objects(username=username).update(followers=followers)
     post2 = User.objects(username=current_user.username).first()
@@ -256,9 +291,10 @@ def unfollow(username):
         flash('此用户不存在.')
         return redirect(url_for('.index'))
     very = False
-    temp = User.objects(username=current_user.username).following
+    temp = User.objects(username=current_user.username).first().following
+    print(temp)
     for i in range(temp.__len__()):
-        if temp[i][0] == username:
+        if temp[i]['username'] == username:
             very = True
             break
     if not very:
@@ -273,7 +309,7 @@ def unfollow(username):
     post2 = User.objects(username=current_user.username).first()
     following = post2.following
     for i in range(following.__len__()):
-        if following[i][0] == username:
+        if following[i]['username'] == username:
             following.remove(following[i])
             break
     User.objects(username=current_user.username).update(following=following)
@@ -284,6 +320,7 @@ def unfollow(username):
 @main.route('/followers/<username>')
 def followers(username):
     follows = User.objects(username=username).first().followers
+    print('follows', follows)
     if user is None:
         flash('此用户不存在.')
         return redirect(url_for('.index'))

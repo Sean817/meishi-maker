@@ -122,10 +122,12 @@ class Temp(UserMixin):
         # MongoClient().blog.User.update({'temp': self.email}, {'$set': {'last_since': datetime.utcnow()}})
 
     def is_following(self, user):
-        temp = User.objects(username=self.username).get('following')
+        temp = User.objects(username=self.username).first().following
         for i in range(temp.__len__()):
-            if temp[i][0] == user.username:
+            if temp[i]['username'] == user.username:
                 return True
+        # for x in range(temp.__len__()):
+        #     if temp[i][0] == user.username:
         return False
 
 
